@@ -22,7 +22,7 @@ service = RunService(store)
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "mode": "demo" if not settings.openai_api_key else "ai"}
+    return {"status": "ok", "mode": "demo"}
 
 
 @app.post("/api/runs", response_model=Run, status_code=202)

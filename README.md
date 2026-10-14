@@ -2,7 +2,7 @@
 
 VeriGraph AI is a context-aware software engineering review and verification MVP. It ingests a public GitHub repository, builds a file/function/import graph, coordinates specialized review stages, presents traceable findings and diffs, and records verification outcomes in a live dark dashboard.
 
-The project is deliberately honest about capability: without `OPENAI_API_KEY`, it runs in **Demo Mode** using deterministic security rules and a bundled vulnerable sample. It never labels simulated output as an external tool result.
+The project is deliberately honest about capability: this MVP runs in **Demo Mode** using deterministic security rules and a bundled vulnerable sample. Supplying an API key does not relabel deterministic output as AI-generated, and simulated output is never presented as an external-tool result.
 
 ## Quick start
 

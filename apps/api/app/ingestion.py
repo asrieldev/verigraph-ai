@@ -44,7 +44,19 @@ def clone_repository(url: str, target: Path) -> Path:
         timeout=60,
         check=True,
     )
+    enforce_repository_size(target)
     return target
+
+
+def enforce_repository_size(root: Path) -> None:
+    maximum = settings.max_repository_mb * 1024 * 1024
+    total = 0
+    for path in root.rglob("*"):
+        if path.is_symlink() or not path.is_file() or ".git" in path.parts:
+            continue
+        total += path.stat().st_size
+        if total > maximum:
+            raise ValueError(f"Repository exceeds the {settings.max_repository_mb} MB limit")
 
 
 def index_repository(
@@ -55,7 +67,7 @@ def index_repository(
     edges = []
     path_ids = {}
     for path in sorted(root.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in SOURCE_SUFFIXES or any(p in IGNORED for p in path.parts):
+        if path.is_symlink() or not path.is_file() or path.suffix.lower() not in SOURCE_SUFFIXES or any(p in IGNORED for p in path.parts):
             continue
         if path.stat().st_size > settings.max_file_bytes:
             continue

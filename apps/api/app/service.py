@@ -4,7 +4,6 @@ from pathlib import Path
 from uuid import uuid4
 
 from .analyzer import analyze, verify_patch_in_copy
-from .config import settings
 from .ingestion import clone_repository, index_repository, validate_repository_url
 from .models import AgentState, CreateRun, Run, Trace
 from .orchestration import AGENTS, agent_order
@@ -22,7 +21,8 @@ class RunService:
         run = Run(
             id=str(uuid4()),
             repository_url=data.repository_url,
-            demo_mode=not bool(settings.openai_api_key),
+            # Deterministic analysis remains the only enabled mode in this MVP.
+            demo_mode=True,
             created_at=now,
             updated_at=now,
             agents=[AgentState(name=x) for x in AGENTS],
