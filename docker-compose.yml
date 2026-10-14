@@ -1,0 +1,36 @@
+name: verigraph-ai
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment: {POSTGRES_USER: verigraph, POSTGRES_PASSWORD: verigraph, POSTGRES_DB: verigraph}
+    volumes: [postgres-data:/var/lib/postgresql/data, ./infrastructure/database:/docker-entrypoint-initdb.d:ro]
+    healthcheck: {test: [CMD-SHELL, pg_isready -U verigraph], interval: 5s, timeout: 3s, retries: 10}
+  redis:
+    image: redis:7.4-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes: [redis-data:/data]
+    healthcheck: {test: [CMD, redis-cli, ping], interval: 5s, timeout: 3s, retries: 10}
+  api:
+    build: ./apps/api
+    env_file: [.env]
+    environment: {DATABASE_URL: postgresql+psycopg://verigraph:verigraph@postgres:5432/verigraph, REDIS_URL: redis://redis:6379/0}
+    ports: ["8000:8000"]
+    volumes: [analysis-data:/app/data, repo-workspace:/app/workspace]
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  worker:
+    build: ./apps/api
+    command: celery -A workers.celery_app worker --loglevel=info --concurrency=2
+    env_file: [.env]
+    environment: {REDIS_URL: redis://redis:6379/0}
+    volumes: [./workers:/app/workers:ro, repo-workspace:/app/workspace]
+    depends_on: {redis: {condition: service_healthy}}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  web:
+    build: {context: ., dockerfile: apps/web/Dockerfile}
+    ports: ["5173:80"]
+    depends_on: [api]
+volumes: {postgres-data: {}, redis-data: {}, analysis-data: {}, repo-workspace: {}}
+
